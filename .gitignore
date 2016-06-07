@@ -56,3 +56,7 @@ Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# Visual studio database files
+*.VC.opendb
+*.VC.db
