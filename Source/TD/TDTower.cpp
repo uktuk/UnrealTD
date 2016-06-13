@@ -12,6 +12,16 @@ ATDTower::ATDTower()
 
 	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Skeletal Mesh"));
 	Mesh->AttachTo(RootComponent);
+
+	TargetAreaCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Target Area Capsule"));
+	TargetAreaCapsule->SetCollisionProfileName("OverlapAll");
+	TargetAreaCapsule->bGenerateOverlapEvents = true;
+	TargetAreaCapsule->OnComponentBeginOverlap.AddDynamic(this, &ATDTower::OnOverlapBegin);
+	TargetAreaCapsule->SetCapsuleRadius(100.0f);
+	TargetAreaCapsule->SetCapsuleHalfHeight(25.0f);
+	TargetAreaCapsule->AttachTo(RootComponent);
+
+	bHasBeenPlaced = false;
 }
 
 // Called when the game starts or when spawned
@@ -28,3 +38,11 @@ void ATDTower::Tick( float DeltaTime )
 
 }
 
+// Called when an object overlaps with one of the tower's components
+void ATDTower::OnOverlapBegin(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && (OtherActor != this) && OtherComp)
+	{
+		// Check if we overlapped with an enemy
+	}
+}

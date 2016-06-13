@@ -17,11 +17,15 @@ public:
 	
 	UTDPlayerCamera(const FObjectInitializer & ObjectInitializer);
 
-	// Zooming in the camera
 	void OnZoomIn();
 
-	// Zooming out the camera
-	void OnZoomOut();	
+	void OnZoomOut();
+
+	void UpdateCameraMovement();
+
+	void MoveForward(float val);
+
+	void MoveRight(float val);
 
 	void SetZoomLevel(float newLevel);
 

@@ -32,17 +32,13 @@ public:
 	// Moves PawnBox Right and Left which pulls the CameraBoom
 	void MoveRight(float val);
 
-	// Zooms in the camera
-	UFUNCTION()
 	void OnZoomIn();
 
-	// Zooms out the camera
-	UFUNCTION()
 	void OnZoomOut();
 
-	// Attempts to place a tower at mouse position
-	UFUNCTION()
 	void PlaceTower();
+
+	void PlaceTower(ATDTower* tower, FVector location);
 
 public:
 
@@ -52,31 +48,24 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
 	float zoomSpeed;
 
-protected:
-
-	// Box Component for the camera + springarm to attach to and follow
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Root)
 	UBoxComponent* pawnBox;
-		
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+
+	 UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	UTDPlayerCamera* playerCamera;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Camera)
 	class USpringArmComponent* cameraBoom;
 
-	// The grid consisting of Tiles to place towers on
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
 	ATDGrid* Grid;
 
-	// Which tower is currently selected
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower")
 	TSubclassOf<ATDTower> selectedTower;
 
-	// List of classes which can be spawned
 	UPROPERTY(EditAnywhere, Category=Tower)
 	TArray<TSubclassOf<class ATDTower> > TowerClasses;
 
-	// List of towers which have been placed by the player in the level
 	UPROPERTY(EditAnywhere, Category = Tower)
 	TArray<ATDTower*> towerList;
 };

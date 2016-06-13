@@ -20,8 +20,19 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
+protected:
+
+	UFUNCTION()
+	void OnOverlapBegin(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 public:
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
 	USkeletalMeshComponent* Mesh;
+
+	UPROPERTY(EditAnywhere)
+	UCapsuleComponent* TargetAreaCapsule;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Status")
+	bool bHasBeenPlaced;
 };

@@ -3,6 +3,7 @@
 #ifndef __TD_H__
 #define __TD_H__
 
+#include "SlateBasics.h"
 #include "EngineMinimal.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTD, Log, All);
