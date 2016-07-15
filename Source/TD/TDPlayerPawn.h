@@ -8,6 +8,13 @@
 #include "TDTower.h"
 #include "TDPlayerPawn.generated.h"
 
+// Types of Towers
+UENUM(BlueprintType)
+enum class ETowerTypes : uint8
+{
+	TT_Tower1	UMETA(DisplayName = "Tower 1")
+};
+
 UCLASS()
 class TD_API ATDPlayerPawn : public APawn
 {
@@ -26,6 +33,12 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
 
+	// Called when left click event fires
+	void LeftClicked();
+
+	// Called when right click event fires
+	void RightClicked();
+
 	// Moves PawnBox Forward and Backwards which pulls the CameraBoom
 	void MoveForward(float val);
 
@@ -36,9 +49,12 @@ public:
 
 	void OnZoomOut();
 
-	void PlaceTower();
-
 	void PlaceTower(ATDTower* tower, FVector location);
+
+	// Function to buy a tower from the menu	 
+	// If you have the funds, puts a placeable tower on your cursor ready to be placed
+	UFUNCTION(BlueprintCallable, Category = "Tower")
+	void SelectTowerFromStore(ETowerTypes TowerType);
 
 public:
 
@@ -60,12 +76,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
 	ATDGrid* Grid;
 
+	// Pointer to the currently selected tower
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower")
-	TSubclassOf<ATDTower> selectedTower;
+	ATDTower* selectedTower;
 
-	UPROPERTY(EditAnywhere, Category=Tower)
-	TArray<TSubclassOf<class ATDTower> > TowerClasses;
+	// Array of Tower Classes available for the player to buy and spawn
+	UPROPERTY(EditAnywhere, Category = "Tower")
+	TArray<TSubclassOf<class ATDTower> > towerClasses;
 
+	// Array of Tower instances that have been placed in the world by the player
 	UPROPERTY(EditAnywhere, Category = Tower)
 	TArray<ATDTower*> towerList;
 };

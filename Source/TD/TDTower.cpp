@@ -38,11 +38,12 @@ void ATDTower::Tick( float DeltaTime )
 
 }
 
-// Called when an object overlaps with one of the tower's components
+// Called when an object overlaps with the tower's TargetAreaCapsule Component
 void ATDTower::OnOverlapBegin(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor && (OtherActor != this) && OtherComp)
 	{
 		// Check if we overlapped with an enemy
+		UE_LOG(LogTD, Log, TEXT("%s: Overlapped with %s"), *this->GetName(), *OtherActor->GetName());
 	}
 }
