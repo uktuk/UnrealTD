@@ -5,6 +5,7 @@
 #include "GameFramework/Actor.h"
 #include "TDEnemy.generated.h"
 
+
 UCLASS()
 class TD_API ATDEnemy : public AActor
 {
@@ -20,14 +21,31 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
+	/** Take damage from another source 
+	 *	Meant to be called from the damage dealing source ex. Projectile fired from tower
+	 *	@param damageAmount -> the amount of damage to take
+	 *	@param sender       -> the Actor which send the damage source ex. which tower/structure
+	 */
+	void TakeDamage(float damageAmount, AActor* sender);
+
 protected:
 	UFUNCTION()
 	void OnOverlapBegin(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 protected:
+	// Skeletal mesh for the Enemy
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Mesh")
 	USkeletalMeshComponent* Mesh;
 
+	// CapsuleComponent for collision detection
 	UPROPERTY(EditAnywhere, Category = "Collsion")
 	UCapsuleComponent* CollisionCapsule;
+
+	// Maximum health
+	UPROPERTY(visibleAnywhere, BlueprintReadonly, Category = "Stats")
+	float maxHealth;
+	
+	// Current health (out of maximum health)
+	UPROPERTY(visibleAnywhere, BlueprintReadonly, Category = "Stats")
+	float currentHealth;
 };
