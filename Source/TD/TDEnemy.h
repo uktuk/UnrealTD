@@ -28,6 +28,8 @@ public:
 	 */
 	void TakeDamage(float damageAmount, AActor* sender);
 
+	void SetWaypoints(TArray<class ATDWaypoint*> waypoints);
+
 protected:
 	UFUNCTION()
 	void OnOverlapBegin(class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -41,11 +43,20 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Collsion")
 	UCapsuleComponent* CollisionCapsule;
 
+	UPROPERTY(EditAnywhere, Category = "Defaults")
+	float moveSpeed;
+
 	// Maximum health
-	UPROPERTY(visibleAnywhere, BlueprintReadonly, Category = "Stats")
+	UPROPERTY(visibleAnywhere, BlueprintReadonly, Category = "Defaults")
 	float maxHealth;
 	
 	// Current health (out of maximum health)
-	UPROPERTY(visibleAnywhere, BlueprintReadonly, Category = "Stats")
-	float currentHealth;
+	UPROPERTY(visibleAnywhere, BlueprintReadonly, Category = "Defaults")
+	float currentHealth;	
+
+	UPROPERTY()
+	uint16 nextWaypoint;
+
+	UPROPERTY()
+	TArray<class ATDWaypoint*> waypointRoute;
 };

@@ -3,6 +3,7 @@
 #include "TD.h"
 #include "TDEnemy.h"
 #include "TDTower.h"
+#include "TDWaypoint.h"
 
 
 // Sets default values
@@ -22,8 +23,10 @@ ATDEnemy::ATDEnemy()
 	CollisionCapsule->SetCapsuleHalfHeight(25.0f);
 	CollisionCapsule->AttachTo(RootComponent);
 
+	moveSpeed = 5.0f;
 	maxHealth = 100.0f;
 	currentHealth = 100.0f;
+	nextWaypoint = 0;
 }
 
 // Called when the game starts or when spawned
@@ -37,6 +40,24 @@ void ATDEnemy::BeginPlay()
 void ATDEnemy::Tick( float DeltaTime )
 {
 	Super::Tick( DeltaTime );
+	FVector actorLocation = GetActorLocation();
+
+	if (waypointRoute.Num() > 0)
+	{
+		// If we've arrived at the next waypoint and it's not the final waypoint
+		if ( (FVector::DistSquared(actorLocation, waypointRoute[nextWaypoint]->GetActorLocation()) < 15.0f) &&
+			 ((nextWaypoint + 1) != waypointRoute.Num()) )
+		{
+			++nextWaypoint;
+		}
+		else // Move towards next waypoint
+		{
+			FVector toNextWaypoint = waypointRoute[nextWaypoint]->GetActorLocation() - actorLocation;
+			toNextWaypoint.Normalize();
+
+			SetActorLocation(actorLocation + (toNextWaypoint * moveSpeed * DeltaTime));
+		}
+	}
 
 }
 
@@ -70,4 +91,10 @@ void ATDEnemy::OnOverlapBegin(class AActor* OtherActor, class UPrimitiveComponen
 		// overlapped with something		
 		UE_LOG(LogTD, Log, TEXT("%s: Overlapped with %s"), *this->GetName(), *OtherActor->GetName());
 	}
+}
+
+
+void ATDEnemy::SetWaypoints(TArray<ATDWaypoint*> waypoints)
+{
+	waypointRoute = waypoints;
 }

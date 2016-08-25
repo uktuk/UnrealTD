@@ -69,7 +69,16 @@ void ATDPlayerPawn::Tick( float DeltaTime )
 				{
 					FVector hitLocation = Hit.Location;
 					FTDTile* hitTile = Grid->GetTileFromXY(Hit.Location.X, Hit.Location.Y);
-					selectedTower->SetActorLocation(hitTile->position);
+					FVector distToNearestTile = hitTile->position - Hit.Location;
+
+					if (distToNearestTile.SizeSquared() <= FMath::Square(30.0f))
+					{
+						selectedTower->SetActorLocation(hitTile->position);
+					}
+					else
+					{
+						selectedTower->SetActorLocation(Hit.Location);
+					}
 				}
 			}
 		}		

@@ -98,5 +98,13 @@ FTDTile* ATDGrid::GetTileFromXY(const float inX, const float inY)
 	float x_new = round((inX - gridOffset.X) / float(tileSize));
 	float y_new = round((inY - gridOffset.Y) / float(tileSize));
 
-	return &tileList[(x_new * numTilesHigh) + y_new];
+	int tileIndex = (x_new * numTilesHigh) + y_new;
+	if (tileIndex > 0 && tileIndex < tileList.Num())
+	{
+		return &tileList[tileIndex];
+	}
+	else
+	{
+		return NULL;
+	}
 }
