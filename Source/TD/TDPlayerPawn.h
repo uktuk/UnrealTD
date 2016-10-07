@@ -93,5 +93,5 @@ private:
 		ATDTower* prePlacementTwr;
 
 	UFUNCTION()
-		AActor* TraceAtMouseCursor();
+		bool TraceAtMouseCursor(FHitResult& HitResult, ECollisionChannel collisionChannel, float distance, bool DrawDebug = false);
 };

@@ -44,51 +44,28 @@ void ATDPlayerPawn::Tick(float DeltaTime)
 
 	if (prePlacementTwr != nullptr)
 	{
-
 		// Player has selected a tower from the store and has not placed it yet
-		//if (!selectedTower->bHasBeenPlaced)
-		//{
-		FVector WorldLocation;
-		FVector WorldDirection;
-
-		// Project our mouse position into world space
-		APlayerController* playerController = Cast<APlayerController>(Controller);
-		if (playerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+		FHitResult Hit(ForceInit);
+		if (TraceAtMouseCursor(Hit, ECC_GameTraceChannel1, 5000.0f))
 		{
-			// ATDPlayerPawn* playerPawn = Cast<ATDPlayerPawn>(GetControlledPawn());
-			FVector TraceEndLocation = playerCamera->GetForwardVector() + (12000 * WorldDirection);
-
-			// Data structure to hold the Parameters to customize the Trace search
-			FCollisionQueryParams TraceParams(FName(TEXT("CameraTrace")), true, this);
-			TraceParams.bTraceAsyncScene = true;		// Trace Asynchronously so as not to block the program when tracing
-			TraceParams.AddIgnoredActor(this);			// Ignore its own actor in the trace
-
-			FHitResult Hit(ForceInit);
-			// Terrain Channel
-			if (GetWorld()->LineTraceSingleByChannel(Hit, WorldLocation, TraceEndLocation, ECC_GameTraceChannel1, TraceParams))
+			// Trace to mouse cursor and place the prePlacement tower at cursor location
+			FVector hitLocation = Hit.Location;
+			FTDTile* hitTile = Grid->GetTileFromXY(Hit.Location.X, Hit.Location.Y);
+			if (hitTile)
 			{
-				FVector hitLocation = Hit.Location;
-				FTDTile* hitTile = Grid->GetTileFromXY(Hit.Location.X, Hit.Location.Y);
-				if (hitTile)
+				FVector distToNearestTile = hitTile->position - Hit.Location;
+		
+				// Snap to grid
+				if (distToNearestTile.SizeSquared() <= FMath::Square(30.0f))
 				{
-					FVector distToNearestTile = hitTile->position - Hit.Location;
-
-					if (distToNearestTile.SizeSquared() <= FMath::Square(30.0f))
-					{
-						prePlacementTwr->SetActorLocation(hitTile->position);
-					}
-					else
-					{
-						prePlacementTwr->SetActorLocation(Hit.Location);
-					}
+					prePlacementTwr->SetActorLocation(hitTile->position);
+				}
+				else
+				{
+					prePlacementTwr->SetActorLocation(Hit.Location);
 				}
 			}
 		}
-		// }		
-		// else // Player has selected a tower which is already in place in the world
-		// {
-		// 	// show UI for tower (stats, abilities, sell, etc)
-		// }
 	}
 }
 
@@ -117,9 +94,9 @@ void ATDPlayerPawn::LeftClicked()
 		prePlacementTwr = nullptr;
 	}
 
-	AActor* hitActor = TraceAtMouseCursor();
-
-	// ATDTower* hitTower = Cast<ATDTower>(hitActor);
+	FHitResult Hit(ForceInit);
+	TraceAtMouseCursor(Hit, ECC_Pawn, 5000.0f, true);
+	AActor* hitActor = Hit.Actor.Get();
 
 	if (hitActor && hitActor->IsA(ATDTower::StaticClass()) && (hitActor != selectedTower))
 	{
@@ -201,9 +178,14 @@ void ATDPlayerPawn::PlaceTower(ATDTower* tower, FVector location)
 
 void ATDPlayerPawn::SelectTowerFromStore(ETowerTypes TowerType)
 {
+	if (prePlacementTwr)
+	{
+		prePlacementTwr->Destroy();
+		prePlacementTwr = nullptr;
+	}
+
 	int32 numTowerClasses = towerClasses.Num();
-	if ((numTowerClasses > 0) && ((int32)TowerType < numTowerClasses) &&
-		((selectedTower == nullptr) || (selectedTower != nullptr && selectedTower->bHasBeenPlaced)))  // If there is no tower selected OR the tower selected has already been placed
+	if ( (numTowerClasses > 0) && ((int32)TowerType < numTowerClasses) )
 	{
 		if (selectedTower)
 		{
@@ -220,8 +202,11 @@ void ATDPlayerPawn::SelectTowerFromStore(ETowerTypes TowerType)
 	}
 }
 
-AActor* ATDPlayerPawn::TraceAtMouseCursor()
+bool ATDPlayerPawn::TraceAtMouseCursor(FHitResult& hitResult, ECollisionChannel collisionChannel, float distance, bool DrawDebug)
 {
+	bool didSucceed = false;
+	hitResult.Init();
+
 	FVector WorldLocation;
 	FVector WorldDirection;
 
@@ -229,23 +214,27 @@ AActor* ATDPlayerPawn::TraceAtMouseCursor()
 	APlayerController* playerController = Cast<APlayerController>(Controller);
 	if (playerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
 	{
-		// ATDPlayerPawn* playerPawn = Cast<ATDPlayerPawn>(GetControlledPawn());
-		FVector TraceEndLocation = playerCamera->GetForwardVector() + (12000 * WorldDirection);
-
 		// Data structure to hold the Parameters to customize the Trace search
 		FCollisionQueryParams TraceParams(FName(TEXT("CameraTrace")), true, this);
 		TraceParams.bTraceAsyncScene = true;		// Trace Asynchronously so as not to block the program when tracing
-		TraceParams.AddIgnoredActor(this);			// Ignore its own actor in the trace		
+		TraceParams.AddIgnoredActor(this);			// Ignore its own actor in the trace				
 
-		FHitResult Hit(ForceInit);
+		FVector traceEndLocation = WorldDirection;
+		traceEndLocation.Normalize();
+		traceEndLocation *= distance;
+		traceEndLocation += playerCamera->GetComponentLocation();		
 
+		if (DrawDebug)
+		{
+			DrawDebugLine(GetWorld(), WorldLocation, traceEndLocation, FColor::Red, true);
+		}
 
 		//if (GetWorld()->LineTraceSingleByObjectType(Hit, WorldLocation, TraceEndLocation, ECC_Visibility, TraceParams))
-		if (GetWorld()->LineTraceSingleByChannel(Hit, WorldLocation, TraceEndLocation, ECC_Pawn, TraceParams))
+		if (GetWorld()->LineTraceSingleByChannel(hitResult, WorldLocation, traceEndLocation, collisionChannel, TraceParams))
 		{
-			return Hit.Actor.Get();
+			return didSucceed = true;
 		}
 	}
 
-	return nullptr;
+	return didSucceed;
 }
