@@ -22,21 +22,27 @@ protected:
 	virtual void SetupInputComponent() override;
 
 	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;	
+	virtual void BeginPlay() override;
 
 protected:
 
 	// Class of widget to instantiate
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
-	TSubclassOf<class UUserWidget> WidgetTemplate;
-	
+		TSubclassOf<class UUserWidget> WidgetTemplate;
+
 	// The Current instance of the widget UI
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
-	UUserWidget* WidgetInstance;
+		UUserWidget* WidgetInstance;
+
+	// Class of widget to instantiate
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+		TSubclassOf<class UUserWidget> TowerSelectWidgetTemplate;
+
+	// The Current instance of the widget UI
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+		UUserWidget* TowerSelectInstance;
 
 	// Array of Tower classes available for the player to spawn
 	UPROPERTY(EditAnywhere)
-	TArray<TSubclassOf<class ATDTower> > TowerClasses;
+		TArray<TSubclassOf<class ATDTower> > TowerClasses;
 };
-
-

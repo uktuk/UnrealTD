@@ -10,20 +10,11 @@ ATDPlayerController::ATDPlayerController()
 	bShowMouseCursor = true;
 	// DefaultMouseCursor = EMouseCursor::Crosshairs;
 	IgnoreMoveInput = true;
-
-	// setup User's UI Widgets
-	if (WidgetTemplate)
-	{
-		if (!WidgetInstance)
-		{
-			WidgetInstance = CreateWidget<UUserWidget>(this, WidgetTemplate);
-		}
-	}
 }
 
 void ATDPlayerController::PlayerTick(float DeltaTime)
 {
-	Super::PlayerTick(DeltaTime);	
+	Super::PlayerTick(DeltaTime);
 }
 
 void ATDPlayerController::SetupInputComponent()
@@ -47,5 +38,20 @@ void ATDPlayerController::BeginPlay()
 	if ((WidgetInstance) && (!WidgetInstance->GetIsVisible()))
 	{
 		WidgetInstance->AddToViewport();
+	}
+
+	// -------------------------------------------------------------------------
+
+	if (TowerSelectWidgetTemplate)
+	{
+		if (!TowerSelectInstance)
+		{
+			TowerSelectInstance = CreateWidget<UUserWidget>(this, TowerSelectWidgetTemplate);
+		}
+	}
+
+	if ((TowerSelectInstance) && (!TowerSelectInstance->GetIsVisible()))
+	{
+		TowerSelectInstance->AddToViewport();
 	}
 }

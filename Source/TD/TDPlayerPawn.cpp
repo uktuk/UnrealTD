@@ -9,7 +9,7 @@
 // Sets default values
 ATDPlayerPawn::ATDPlayerPawn()
 {
- 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	pawnBox = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
@@ -25,6 +25,7 @@ ATDPlayerPawn::ATDPlayerPawn()
 
 	Grid = nullptr;
 	selectedTower = nullptr;
+	prePlacementTwr = nullptr;
 
 	moveSpeed = 500.0f;
 	zoomSpeed = 4000.0f;
@@ -34,58 +35,60 @@ ATDPlayerPawn::ATDPlayerPawn()
 void ATDPlayerPawn::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
-void ATDPlayerPawn::Tick( float DeltaTime )
+void ATDPlayerPawn::Tick(float DeltaTime)
 {
-	Super::Tick( DeltaTime );
+	Super::Tick(DeltaTime);
 
-	if (selectedTower != nullptr)
+	if (prePlacementTwr != nullptr)
 	{
-	   
+
 		// Player has selected a tower from the store and has not placed it yet
-		if (!selectedTower->bHasBeenPlaced)
+		//if (!selectedTower->bHasBeenPlaced)
+		//{
+		FVector WorldLocation;
+		FVector WorldDirection;
+
+		// Project our mouse position into world space
+		APlayerController* playerController = Cast<APlayerController>(Controller);
+		if (playerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
 		{
-			FVector WorldLocation;
-			FVector WorldDirection;
+			// ATDPlayerPawn* playerPawn = Cast<ATDPlayerPawn>(GetControlledPawn());
+			FVector TraceEndLocation = playerCamera->GetForwardVector() + (12000 * WorldDirection);
 
-			// Project our mouse position into world space
-			APlayerController* playerController = Cast<APlayerController>(Controller);
-			if (playerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+			// Data structure to hold the Parameters to customize the Trace search
+			FCollisionQueryParams TraceParams(FName(TEXT("CameraTrace")), true, this);
+			TraceParams.bTraceAsyncScene = true;		// Trace Asynchronously so as not to block the program when tracing
+			TraceParams.AddIgnoredActor(this);			// Ignore its own actor in the trace
+
+			FHitResult Hit(ForceInit);
+			// Terrain Channel
+			if (GetWorld()->LineTraceSingleByChannel(Hit, WorldLocation, TraceEndLocation, ECC_GameTraceChannel1, TraceParams))
 			{
-				// ATDPlayerPawn* playerPawn = Cast<ATDPlayerPawn>(GetControlledPawn());
-				FVector TraceEndLocation = playerCamera->GetForwardVector() + (12000 * WorldDirection);
-
-				// Data structure to hold the Parameters to customize the Trace search
-				FCollisionQueryParams TraceParams(FName(TEXT("CameraTrace")), true, this);
-				TraceParams.bTraceAsyncScene = true;		// Trace Asynchronously so as not to block the program when tracing
-				TraceParams.AddIgnoredActor(this);			// Ignore its own actor in the trace
-
-				FHitResult Hit(ForceInit);
-
-				if (GetWorld()->LineTraceSingleByChannel(Hit, WorldLocation, TraceEndLocation, ECC_WorldStatic, TraceParams))
+				FVector hitLocation = Hit.Location;
+				FTDTile* hitTile = Grid->GetTileFromXY(Hit.Location.X, Hit.Location.Y);
+				if (hitTile)
 				{
-					FVector hitLocation = Hit.Location;
-					FTDTile* hitTile = Grid->GetTileFromXY(Hit.Location.X, Hit.Location.Y);
 					FVector distToNearestTile = hitTile->position - Hit.Location;
 
 					if (distToNearestTile.SizeSquared() <= FMath::Square(30.0f))
 					{
-						selectedTower->SetActorLocation(hitTile->position);
+						prePlacementTwr->SetActorLocation(hitTile->position);
 					}
 					else
 					{
-						selectedTower->SetActorLocation(Hit.Location);
+						prePlacementTwr->SetActorLocation(Hit.Location);
 					}
 				}
 			}
-		}		
-		else // Player has selected a tower which is already in place in the world
-		{
-			// show UI for tower (stats, abilities, sell, etc)
 		}
+		// }		
+		// else // Player has selected a tower which is already in place in the world
+		// {
+		// 	// show UI for tower (stats, abilities, sell, etc)
+		// }
 	}
 }
 
@@ -107,28 +110,51 @@ void ATDPlayerPawn::SetupPlayerInputComponent(class UInputComponent* InputCompon
 
 void ATDPlayerPawn::LeftClicked()
 {
-	if (selectedTower && !selectedTower->bHasBeenPlaced)
+	if (prePlacementTwr)
 	{
-		PlaceTower(selectedTower, selectedTower->GetActorLocation());
+		PlaceTower(prePlacementTwr, prePlacementTwr->GetActorLocation());
+		selectedTower = prePlacementTwr;
+		prePlacementTwr = nullptr;
+	}
+
+	AActor* hitActor = TraceAtMouseCursor();
+
+	// ATDTower* hitTower = Cast<ATDTower>(hitActor);
+
+	if (hitActor && hitActor->IsA(ATDTower::StaticClass()) && (hitActor != selectedTower))
+	{
+		if (selectedTower)
+		{
+			selectedTower->OnDeselected();
+		}
+		selectedTower = Cast<ATDTower>(hitActor);
+		selectedTower->OnSelected();
+
+	}
+	else
+	{
+		if (selectedTower)
+		{
+			selectedTower->OnDeselected();
+		}
 		selectedTower = nullptr;
 	}
+
+
 }
 
 void ATDPlayerPawn::RightClicked()
-{	
-	if (selectedTower)
+{
+	if (prePlacementTwr)
 	{
-		if (!selectedTower->bHasBeenPlaced)
-		{
-			selectedTower->Destroy();
-		}
-		selectedTower = nullptr;
+		prePlacementTwr->Destroy();
+		prePlacementTwr = nullptr;
 	}
 }
 
 void ATDPlayerPawn::MoveForward(float val)
 {
-	
+
 	if (val != 0)
 	{
 		SetActorLocation(GetActorLocation() + (GetActorForwardVector() * (moveSpeed * val * GetWorld()->DeltaTimeSeconds)));
@@ -175,13 +201,51 @@ void ATDPlayerPawn::PlaceTower(ATDTower* tower, FVector location)
 
 void ATDPlayerPawn::SelectTowerFromStore(ETowerTypes TowerType)
 {
-	int32 numTowerClasses = towerClasses.Num();	
+	int32 numTowerClasses = towerClasses.Num();
 	if ((numTowerClasses > 0) && ((int32)TowerType < numTowerClasses) &&
 		((selectedTower == nullptr) || (selectedTower != nullptr && selectedTower->bHasBeenPlaced)))  // If there is no tower selected OR the tower selected has already been placed
 	{
+		if (selectedTower)
+		{
+			selectedTower->OnDeselected();
+			selectedTower = nullptr;
+		}
+
 		FActorSpawnParameters spawnInfo;
 		spawnInfo.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-		selectedTower = GetWorld()->SpawnActor<ATDTower>(towerClasses[(int32)TowerType], spawnInfo);
+		prePlacementTwr = GetWorld()->SpawnActor<ATDTower>(towerClasses[(int32)TowerType], spawnInfo);
+		selectedTower = prePlacementTwr;
+		selectedTower->OnSelected();
 	}
+}
+
+AActor* ATDPlayerPawn::TraceAtMouseCursor()
+{
+	FVector WorldLocation;
+	FVector WorldDirection;
+
+	// Project our mouse position into world space
+	APlayerController* playerController = Cast<APlayerController>(Controller);
+	if (playerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+	{
+		// ATDPlayerPawn* playerPawn = Cast<ATDPlayerPawn>(GetControlledPawn());
+		FVector TraceEndLocation = playerCamera->GetForwardVector() + (12000 * WorldDirection);
+
+		// Data structure to hold the Parameters to customize the Trace search
+		FCollisionQueryParams TraceParams(FName(TEXT("CameraTrace")), true, this);
+		TraceParams.bTraceAsyncScene = true;		// Trace Asynchronously so as not to block the program when tracing
+		TraceParams.AddIgnoredActor(this);			// Ignore its own actor in the trace		
+
+		FHitResult Hit(ForceInit);
+
+
+		//if (GetWorld()->LineTraceSingleByObjectType(Hit, WorldLocation, TraceEndLocation, ECC_Visibility, TraceParams))
+		if (GetWorld()->LineTraceSingleByChannel(Hit, WorldLocation, TraceEndLocation, ECC_Pawn, TraceParams))
+		{
+			return Hit.Actor.Get();
+		}
+	}
+
+	return nullptr;
 }

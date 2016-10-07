@@ -7,12 +7,13 @@
 // Sets default values
 ATDTower::ATDTower()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Skeletal Mesh"));
 	RootComponent = Mesh;
-	// Mesh->AttachTo(RootComponent);
+
+	Portrait = CreateDefaultSubobject<UTexture2D>(TEXT("Portrait"));
 
 	TargetAreaCapsule = CreateDefaultSubobject<UCapsuleComponent>(TEXT("Target Area Capsule"));
 	TargetAreaCapsule->SetCollisionProfileName("OverlapAll");
@@ -22,6 +23,11 @@ ATDTower::ATDTower()
 	TargetAreaCapsule->SetCapsuleRadius(100.0f);
 	TargetAreaCapsule->SetCapsuleHalfHeight(25.0f);
 	TargetAreaCapsule->AttachTo(RootComponent);
+
+	ClickCollisionSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Sphere Collision Component"));
+	ClickCollisionSphere->SetCollisionProfileName("Pawn");
+	ClickCollisionSphere->SetSphereRadius(70.0f);
+	ClickCollisionSphere->AttachTo(RootComponent);
 
 	currentTarget = nullptr;
 	bHasBeenPlaced = false;
@@ -34,13 +40,13 @@ ATDTower::ATDTower()
 void ATDTower::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 }
 
 // Called every frame
-void ATDTower::Tick( float DeltaTime )
+void ATDTower::Tick(float DeltaTime)
 {
-	Super::Tick( DeltaTime );
+	Super::Tick(DeltaTime);
 
 	timeSinceLastFire += DeltaTime;
 
@@ -66,6 +72,16 @@ void ATDTower::Tick( float DeltaTime )
 			timeSinceLastFire = 0.0f;
 		}
 	}
+}
+
+void ATDTower::OnSelected()
+{
+	Mesh->SetRenderCustomDepth(true);
+}
+
+void ATDTower::OnDeselected()
+{
+	Mesh->SetRenderCustomDepth(false);
 }
 
 // Called when an object overlaps with the tower's TargetAreaCapsule Component

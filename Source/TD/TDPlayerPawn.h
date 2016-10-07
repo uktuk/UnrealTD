@@ -26,9 +26,9 @@ public:
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-	
+
 	// Called every frame
-	virtual void Tick( float DeltaSeconds ) override;
+	virtual void Tick(float DeltaSeconds) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* InputComponent) override;
@@ -54,37 +54,44 @@ public:
 	// Function to buy a tower from the menu	 
 	// If you have the funds, puts a placeable tower on your cursor ready to be placed
 	UFUNCTION(BlueprintCallable, Category = "Tower")
-	void SelectTowerFromStore(ETowerTypes TowerType);
+		void SelectTowerFromStore(ETowerTypes TowerType);
 
 public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
-	float moveSpeed;
+		float moveSpeed;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
-	float zoomSpeed;
+		float zoomSpeed;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Root)
-	UBoxComponent* pawnBox;
+		UBoxComponent* pawnBox;
 
-	 UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	UTDPlayerCamera* playerCamera;
-	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+		UTDPlayerCamera* playerCamera;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Camera)
-	class USpringArmComponent* cameraBoom;
+		class USpringArmComponent* cameraBoom;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Grid")
-	ATDGrid* Grid;
+		ATDGrid* Grid;
 
 	// Pointer to the currently selected tower
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tower")
-	ATDTower* selectedTower;
+		ATDTower* selectedTower;
 
 	// Array of Tower Classes available for the player to buy and spawn
 	UPROPERTY(EditAnywhere, Category = "Tower")
-	TArray<TSubclassOf<class ATDTower> > towerClasses;
+		TArray<TSubclassOf<class ATDTower> > towerClasses;
 
 	// Array of Tower instances that have been placed in the world by the player
 	UPROPERTY(EditAnywhere, Category = Tower)
-	TArray<ATDTower*> towerList;
+		TArray<ATDTower*> towerList;
+
+private:
+	UPROPERTY()
+		ATDTower* prePlacementTwr;
+
+	UFUNCTION()
+		AActor* TraceAtMouseCursor();
 };
